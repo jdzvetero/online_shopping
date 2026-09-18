@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Seller Dashboard — Veloura{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="section-head reveal">
+    <h2>{{ current_user.brand_name or current_user.name }}'s Studio</h2>
+    <a href="{{ url_for('seller.product_new') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New product</a>
+  </div>
+
+  <div class="stat-grid reveal">
+    <div class="stat-card glass">
+      <i class="fa-solid fa-shirt"></i>
+      <strong>{{ products|length }}</strong>
+      <span>Products listed</span>
+    </div>
+    <div class="stat-card glass">
+      <i class="fa-solid fa-sack-dollar"></i>
+      <strong>${{ '%.2f'|format(revenue) }}</strong>
+      <span>Total revenue</span>
+    </div>
+    <div class="stat-card glass">
+      <i class="fa-solid fa-receipt"></i>
+      <strong>{{ order_count }}</strong>
+      <span>Orders received</span>
+    </div>
+    <div class="stat-card glass {{ 'stat-warning' if out_of_stock or low_stock }}">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <strong>{{ low_stock|length + out_of_stock|length }}</strong>
+      <span>Stock alerts</span>
+    </div>
+  </div>
+
+  {% if out_of_stock or low_stock %}
+  <div class="alert-list reveal">
+    {% for v in out_of_stock %}
+    <div class="alert-row glass-soft danger"><i class="fa-solid fa-circle-xmark"></i> {{ v.product.name }} — {{ v.size }}/{{ v.color_name }} is out of stock</div>
+    {% endfor %}
+    {% for v in low_stock %}
+    <div class="alert-row glass-soft warning"><i class="fa-solid fa-circle-exclamation"></i> {{ v.product.name }} — {{ v.size }}/{{ v.color_name }} has only {{ v.stock_quantity }} left</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="section-head reveal"><h3>Your Products</h3></div>
+  {% if products %}
+  <div class="seller-product-grid reveal">
+    {% for p in products %}
+    <div class="seller-product-card glass">
+      <img src="{{ p.image_url }}" alt="{{ p.name }}">
+      <div class="seller-product-info">
+        <span class="product-category">{{ p.category }}</span>
+        <h4>{{ p.name }}</h4>
+        <div class="seller-product-meta">
+          <strong>${{ '%.2f'|format(p.base_price) }}</strong>
+          <span class="badge badge-{{ p.lowest_available_status }}">
+            {% if p.lowest_available_status == 'in_stock' %}In stock
+            {% elif p.lowest_available_status == 'preorder' %}Pre-order
+            {% elif p.lowest_available_status == 'made_to_order' %}Made to order
+            {% else %}Unavailable{% endif %}
+          </span>
+          {% if not p.is_active %}<span class="badge badge-mini">Hidden</span>{% endif %}
+        </div>
+        <p class="hint-text">{{ p.variants|length }} variant(s)</p>
+        <div class="seller-product-actions">
+          <a href="{{ url_for('seller.product_edit', product_id=p.id) }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</a>
+          <form action="{{ url_for('seller.product_delete', product_id=p.id) }}" method="post" onsubmit="return confirm('Delete this product?');">
+            <button type="submit" class="btn btn-ghost btn-sm danger"><i class="fa-regular fa-trash-can"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state glass reveal">
+    <i class="fa-solid fa-shirt"></i>
+    <p>You haven't listed any products yet.</p>
+    <a href="{{ url_for('seller.product_new') }}" class="btn btn-primary">Add your first product</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Product' if product else 'New Product' }} — Veloura{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="section-head reveal">
+    <h2>{{ 'Edit Product' if product else 'List a New Product' }}</h2>
+  </div>
+
+  <form method="post" class="product-form glass reveal" id="productForm">
+    <div class="form-grid">
+      <label>Product name
+        <input type="text" name="name" value="{{ product.name if product else (form.name if form else '') }}" required>
+      </label>
+      <label>Category
+        <select name="category" required>
+          <option value="">Choose category</option>
+          {% for c in categories %}
+          <option value="{{ c }}" {{ 'selected' if (product and product.category == c) or (form and form.get('category') == c) }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <label>Description
+      <textarea name="description" rows="3">{{ product.description if product else (form.description if form else '') }}</textarea>
+    </label>
+
+    <div class="form-grid">
+      <label>Base price (USD)
+        <input type="number" step="0.01" min="0" name="base_price" value="{{ product.base_price if product else (form.base_price if form else '') }}" required>
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" name="is_featured" {{ 'checked' if product and product.is_featured }}>
+        Feature on homepage
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <label>Primary image URL
+        <input type="url" name="image_url" value="{{ product.image_url if product else (form.image_url if form else '') }}" placeholder="https://…" required>
+      </label>
+      <label>Hover image URL (optional)
+        <input type="url" name="hover_image_url" value="{{ product.hover_image_url if product else (form.hover_image_url if form else '') }}" placeholder="https://…">
+      </label>
+    </div>
+
+    {% if product %}
+    <label class="checkbox-label">
+      <input type="checkbox" name="is_active" {{ 'checked' if product.is_active }}>
+      Visible in shop
+    </label>
+    {% endif %}
+
+    <hr class="divider">
+
+    <div class="variants-head">
+      <div>
+        <h3>Sizes, Colours &amp; Availability</h3>
+        <p class="hint-text">Add one row per size/colour combination. Set whether it's in stock, pre-order, or made to order.</p>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addVariantRow()"><i class="fa-solid fa-plus"></i> Add variant</button>
+    </div>
+
+    <div id="variantRows"></div>
+
+    <button type="submit" class="btn btn-primary btn-lg full-width">
+      <i class="fa-solid fa-check"></i> {{ 'Save Changes' if product else 'Publish Product' }}
+    </button>
+  </form>
+</section>
+
+<template id="variantRowTemplate">
+  <div class="variant-row glass-soft">
+    <button type="button" class="variant-remove" onclick="this.closest('.variant-row').remove()" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+    <div class="variant-row-grid">
+      <label>Size
+        <input list="sizeOptions" name="variant_size[]" placeholder="M" required>
+      </label>
+      <label>Colour name
+        <input type="text" name="variant_color_name[]" placeholder="Royal Blue" required>
+      </label>
+      <label>Swatch
+        <input type="color" name="variant_color_hex[]" value="#4169E1">
+      </label>
+      <label>Availability
+        <select name="variant_status[]" onchange="toggleVariantFields(this)">
+          <option value="in_stock">In stock</option>
+          <option value="preorder">Pre-order</option>
+          <option value="made_to_order">Made to order</option>
+        </select>
+      </label>
+      <label class="v-field v-stock">Stock qty
+        <input type="number" name="variant_stock[]" min="0" value="10">
+      </label>
+      <label class="v-field v-date" hidden>Available on
+        <input type="date" name="variant_date[]">
+      </label>
+      <label class="v-field v-lead" hidden>Ready in (days)
+        <input type="number" name="variant_leadtime[]" min="1" value="7">
+      </label>
+    </div>
+  </div>
+</template>
+
+<datalist id="sizeOptions">
+  {% for s in size_order %}<option value="{{ s }}">{% endfor %}
+</datalist>
+
+<script>
+  const EXISTING_VARIANTS = {{ existing_variants|tojson }};
+</script>
+{% endblock %}

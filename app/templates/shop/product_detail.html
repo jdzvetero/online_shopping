@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — Veloura{% endblock %}
+
+{% block content %}
+<section class="product-page">
+  <div class="product-gallery reveal">
+    <div class="gallery-main glass">
+      <img id="mainImage" src="{{ product.image_url }}" alt="{{ product.name }}">
+    </div>
+    {% if product.hover_image_url %}
+    <div class="gallery-thumbs">
+      <img src="{{ product.image_url }}" class="thumb active" onclick="setMainImage(this.src)">
+      <img src="{{ product.hover_image_url }}" class="thumb" onclick="setMainImage(this.src)">
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="product-panel glass reveal">
+    <span class="product-category">{{ product.category }}</span>
+    <h1>{{ product.name }}</h1>
+    <div class="price-row">
+      <span class="price">${{ '%.2f'|format(product.base_price) }}</span>
+      <span id="availabilityBadge" class="badge badge-in_stock">Select options</span>
+    </div>
+    <p class="product-desc">{{ product.description or "A signature Veloura piece, designed to move with you." }}</p>
+
+    <div class="option-block">
+      <div class="option-label"><span>Colour</span><em id="selectedColor">—</em></div>
+      <div class="swatch-row" id="colorRow">
+        {% for name, hex in colors.items() %}
+        <button type="button" class="swatch" data-color="{{ name }}" style="background:{{ hex }}" title="{{ name }}" onclick="selectColor('{{ name }}', this)"></button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-label">
+        <span>Size</span>
+        <button type="button" class="link-btn" onclick="openSizeGuide()"><i class="fa-regular fa-ruler"></i> Size guide</button>
+      </div>
+      <div class="size-row" id="sizeRow">
+        {% for s in sizes %}
+        <button type="button" class="size-pill" data-size="{{ s }}" onclick="selectSize('{{ s }}', this)">{{ s }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="availabilityMessage" class="availability-message"></div>
+
+    <form action="{{ url_for('shop.cart_add') }}" method="post" class="add-to-bag-form" id="addToBagForm">
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+      <input type="hidden" name="variant_id" id="variantIdInput" value="">
+      <div class="qty-stepper">
+        <button type="button" onclick="stepQty(-1)">−</button>
+        <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="20" readonly>
+        <button type="button" onclick="stepQty(1)">+</button>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" id="addToBagBtn" disabled>
+        <i class="fa-solid fa-bag-shopping"></i> Add to Bag
+      </button>
+    </form>
+    {% if not current_user.is_authenticated %}
+    <p class="hint-text"><a href="{{ url_for('auth.login') }}">Log in</a> as a shopper to add items to your bag.</p>
+    {% elif current_user.is_seller %}
+    <p class="hint-text">Seller accounts can't purchase. Log in as a shopper to buy.</p>
+    {% endif %}
+
+    <div class="fulfillment-note glass-soft">
+      <i class="fa-solid fa-truck"></i>
+      <div>
+        <strong>Delivery or self pickup</strong>
+        <p>Choose how you'd like to receive your order at checkout — home delivery, or pick a date to collect it yourself.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if related %}
+<section class="section reveal">
+  <div class="section-head"><h2>You may also like</h2></div>
+  <div class="product-grid">
+    {% for p in related %}
+    <a href="{{ url_for('shop.product_detail', product_id=p.id) }}" class="product-card">
+      <div class="product-media">
+        <img class="img-primary" src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+        <span class="badge badge-{{ p.lowest_available_status }}">
+          {% if p.lowest_available_status == 'in_stock' %}In stock
+          {% elif p.lowest_available_status == 'preorder' %}Pre-order
+          {% elif p.lowest_available_status == 'made_to_order' %}Made to order
+          {% else %}Unavailable{% endif %}
+        </span>
+      </div>
+      <div class="product-info">
+        <span class="product-category">{{ p.category }}</span>
+        <h3>{{ p.name }}</h3>
+        <strong class="product-price">${{ '%.2f'|format(p.base_price) }}</strong>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="modal-overlay" id="sizeGuideModal">
+  <div class="modal glass">
+    <button class="modal-close" onclick="closeSizeGuide()">&times;</button>
+    <h3>Size Guide</h3>
+    <p class="hint-text">Measurements in centimetres</p>
+    <table class="size-table">
+      <thead><tr><th>Size</th><th>Bust</th><th>Waist</th><th>Hips</th></tr></thead>
+      <tbody>
+        {% for size, m in size_chart.items() %}
+        <tr><td>{{ size }}</td><td>{{ m.bust }}</td><td>{{ m.waist }}</td><td>{{ m.hips }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const VARIANTS = {{ variants_data|tojson }};
+  const state = { size: null, color: null };
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Checkout — Veloura{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="section-head reveal"><h2>Checkout</h2></div>
+
+  <div class="checkout-layout reveal">
+    <form method="post" class="checkout-form glass" id="checkoutForm">
+      <div class="fulfillment-toggle">
+        <button type="button" class="toggle-btn active" data-type="delivery" onclick="setFulfillment('delivery', this)">
+          <i class="fa-solid fa-truck"></i> Home Delivery
+        </button>
+        <button type="button" class="toggle-btn" data-type="pickup" onclick="setFulfillment('pickup', this)">
+          <i class="fa-solid fa-store"></i> Self Pickup
+        </button>
+      </div>
+      <input type="hidden" name="fulfillment_type" id="fulfillmentInput" value="delivery">
+
+      <div id="deliveryFields" class="fulfillment-fields">
+        <h4>Delivery details</h4>
+        <div class="form-grid">
+          <label>Full name <input type="text" name="full_name" value="{{ (form.full_name if form) or current_user.name }}" required></label>
+          <label>Phone <input type="tel" name="phone" value="{{ (form.phone if form) or '' }}" required></label>
+        </div>
+        <label>Address line 1 <input type="text" name="address_line1" value="{{ (form.address_line1 if form) or '' }}" required></label>
+        <label>Address line 2 (optional) <input type="text" name="address_line2" value="{{ (form.address_line2 if form) or '' }}"></label>
+        <div class="form-grid">
+          <label>City <input type="text" name="city" value="{{ (form.city if form) or '' }}" required></label>
+          <label>Region / State <input type="text" name="region" value="{{ (form.region if form) or '' }}" required></label>
+        </div>
+        <label>Postal code <input type="text" name="postal_code" value="{{ (form.postal_code if form) or '' }}" required></label>
+        <label>Delivery notes (optional) <textarea name="delivery_notes" rows="2">{{ (form.delivery_notes if form) or '' }}</textarea></label>
+      </div>
+
+      <div id="pickupFields" class="fulfillment-fields" hidden>
+        <h4>Self pickup details</h4>
+        <p class="hint-text">Pick a date and time that works for you — we'll have your order ready at our studio.</p>
+        <div class="form-grid">
+          <label>Full name <input type="text" name="full_name" value="{{ (form.full_name if form) or current_user.name }}"></label>
+          <label>Phone <input type="tel" name="phone" value="{{ (form.phone if form) or '' }}"></label>
+        </div>
+        <div class="form-grid">
+          <label>Pickup date <input type="date" name="pickup_date" value="{{ (form.pickup_date if form) or '' }}"></label>
+          <label>Pickup time
+            <select name="pickup_time">
+              <option value="">Choose a time</option>
+              <option>09:00 – 11:00</option>
+              <option>11:00 – 13:00</option>
+              <option>13:00 – 15:00</option>
+              <option>15:00 – 17:00</option>
+              <option>17:00 – 19:00</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg full-width">
+        <i class="fa-solid fa-lock"></i> Place Order
+      </button>
+    </form>
+
+    <aside class="cart-summary glass">
+      <h3>Order Summary</h3>
+      {% for item in items %}
+      <div class="summary-item">
+        <img src="{{ item.variant.product.image_url }}" alt="">
+        <div>
+          <strong>{{ item.variant.product.name }}</strong>
+          <p class="hint-text">Size {{ item.variant.size }} · {{ item.variant.color_name }} · Qty {{ item.quantity }}</p>
+        </div>
+        <span>${{ '%.2f'|format(item.line_total) }}</span>
+      </div>
+      {% endfor %}
+      <div class="summary-row"><span>Subtotal</span><span>${{ '%.2f'|format(subtotal) }}</span></div>
+      <div class="summary-row" id="deliveryFeeRow"><span>Delivery fee</span><span>${{ '%.2f'|format(delivery_fee) }}</span></div>
+      <div class="summary-row total" id="totalRow"><span>Total</span><span>${{ '%.2f'|format(subtotal + delivery_fee) }}</span></div>
+    </aside>
+  </div>
+</section>
+
+<script>
+  const SUBTOTAL = {{ subtotal }};
+  const DELIVERY_FEE = {{ delivery_fee }};
+</script>
+{% endblock %}
