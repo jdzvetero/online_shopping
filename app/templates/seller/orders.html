@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Orders — Veloura{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="section-head reveal"><h2>Orders Containing Your Products</h2></div>
+
+  {% if orders_map %}
+  <div class="order-list reveal">
+    {% for order, items in orders_map.items() %}
+    <div class="order-card glass">
+      <div class="order-card-head">
+        <div>
+          <strong>Order #{{ order.id }}</strong>
+          <p class="hint-text">{{ order.created_at.strftime('%d %B %Y, %H:%M') }} · {{ order.customer.name }}</p>
+        </div>
+        <span class="badge badge-mini">{{ order.status_label }}</span>
+      </div>
+      <div class="seller-order-items">
+        {% for item in items %}
+        <div class="summary-item">
+          <img src="{{ item.image_url }}" alt="">
+          <div>
+            <strong>{{ item.product_name }}</strong>
+            <p class="hint-text">Size {{ item.size }} · {{ item.color_name }} · Qty {{ item.quantity }}</p>
+          </div>
+          <span>${{ '%.2f'|format(item.line_total) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="order-card-foot">
+        <span><i class="fa-solid {{ 'fa-truck' if order.fulfillment_type == 'delivery' else 'fa-store' }}"></i>
+          {% if order.fulfillment_type == 'delivery' %}
+            Deliver to {{ order.city }}, {{ order.region }}
+          {% else %}
+            Pickup {{ order.pickup_date.strftime('%d %b %Y') if order.pickup_date else '' }} · {{ order.pickup_time }}
+          {% endif %}
+        </span>
+        <strong>${{ '%.2f'|format(items|sum(attribute='line_total')) }}</strong>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state glass reveal">
+    <i class="fa-regular fa-clipboard"></i>
+    <p>No orders yet for your products.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

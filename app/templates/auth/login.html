@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Login — Veloura{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-card glass reveal">
+    <span class="brand-mark large"><i class="fa-solid fa-sparkles"></i></span>
+    <h2>Welcome back</h2>
+    <p class="hint-text">Log in to shop or manage your store.</p>
+
+    <form method="post" class="auth-form">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+      <label>Email <input type="email" name="email" value="{{ email }}" required autofocus></label>
+      <label>Password <input type="password" name="password" required></label>
+      <button type="submit" class="btn btn-primary btn-lg full-width">Log In</button>
+    </form>
+
+    <p class="auth-switch">New to Veloura? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+
+    <div class="demo-hint glass-soft">
+      <strong>Demo accounts</strong>
+      <p>Shopper: shopper@veloura.com / shopper123</p>
+      <p>Seller: seller@veloura.com / seller123</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

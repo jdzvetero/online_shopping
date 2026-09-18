@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}My Orders — Veloura{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="section-head reveal"><h2>My Orders</h2></div>
+
+  {% if orders %}
+  <div class="order-list reveal">
+    {% for order in orders %}
+    <div class="order-card glass">
+      <div class="order-card-head">
+        <div>
+          <strong>Order #{{ order.id }}</strong>
+          <p class="hint-text">{{ order.created_at.strftime('%d %B %Y') }} · {{ order.items|length }} item(s)</p>
+        </div>
+        <span class="badge badge-mini">{{ order.status_label }}</span>
+      </div>
+      <div class="order-card-items">
+        {% for item in order.items[:4] %}
+        <img src="{{ item.image_url }}" alt="{{ item.product_name }}">
+        {% endfor %}
+        {% if order.items|length > 4 %}<span class="more-count">+{{ order.items|length - 4 }}</span>{% endif %}
+      </div>
+      <div class="order-card-foot">
+        <span><i class="fa-solid {{ 'fa-truck' if order.fulfillment_type == 'delivery' else 'fa-store' }}"></i>
+          {{ 'Delivery' if order.fulfillment_type == 'delivery' else 'Self pickup on ' + order.pickup_date.strftime('%d %b %Y') if order.pickup_date else 'Self pickup' }}
+        </span>
+        <strong>${{ '%.2f'|format(order.total) }}</strong>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state glass reveal">
+    <i class="fa-regular fa-clipboard"></i>
+    <p>No orders yet.</p>
+    <a href="{{ url_for('shop.index') }}" class="btn btn-primary">Start shopping</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

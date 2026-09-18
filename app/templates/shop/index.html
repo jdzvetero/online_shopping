@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Veloura — Wear Your Aura{% endblock %}
+{% block body_class %}page-home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-text reveal">
+    <span class="eyebrow">New season · 2026 drop</span>
+    <h1>Wear Your <span class="gradient-text">Aura</span></h1>
+    <p>Runway-inspired clothing, in stock today or made just for you. Choose your fit, your colour, and how it reaches you.</p>
+    <div class="hero-actions">
+      <a href="#catalog" class="btn btn-primary btn-lg">Shop the collection <i class="fa-solid fa-arrow-right"></i></a>
+      {% if not current_user.is_authenticated %}
+      <a href="{{ url_for('auth.register') }}" class="btn btn-ghost btn-lg">Become a seller</a>
+      {% endif %}
+    </div>
+    <div class="hero-stats">
+      <div><strong>{{ categories|length }}</strong><span>Categories</span></div>
+      <div><strong>3</strong><span>Ways to receive</span></div>
+      <div><strong>24/7</strong><span>Preorder access</span></div>
+    </div>
+  </div>
+  <div class="hero-visual reveal">
+    <div class="hero-glow"></div>
+    <div class="hero-card glass float">
+      <i class="fa-solid fa-shirt"></i>
+      <span>In stock</span>
+    </div>
+    <div class="hero-card glass float delay-1">
+      <i class="fa-regular fa-calendar-check"></i>
+      <span>Pre-order</span>
+    </div>
+    <div class="hero-card glass float delay-2">
+      <i class="fa-solid fa-scissors"></i>
+      <span>Made to order</span>
+    </div>
+  </div>
+</section>
+
+<section class="chip-row reveal">
+  <a href="{{ url_for('shop.index') }}" class="chip {{ 'chip-active' if not active_category else '' }}">All</a>
+  {% for c in categories %}
+    <a href="{{ url_for('shop.index', category=c) }}" class="chip {{ 'chip-active' if active_category == c else '' }}">{{ c }}</a>
+  {% endfor %}
+</section>
+
+{% if featured and not active_category and not search %}
+<section class="section reveal">
+  <div class="section-head">
+    <h2>Featured this week</h2>
+  </div>
+  <div class="featured-strip">
+    {% for p in featured %}
+    <a href="{{ url_for('shop.product_detail', product_id=p.id) }}" class="featured-card glass">
+      <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+      <div class="featured-info">
+        <span>{{ p.category }}</span>
+        <strong>{{ p.name }}</strong>
+        <em>${{ '%.2f'|format(p.base_price) }}</em>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section" id="catalog">
+  <div class="section-head reveal">
+    <h2>{% if active_category %}{{ active_category }}{% elif search %}Results for “{{ search }}”{% else %}Full Collection{% endif %}</h2>
+    <form class="sort-form" method="get">
+      {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
+      {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
+      <select name="sort" onchange="this.form.submit()">
+        <option value="newest" {{ 'selected' if sort=='newest' }}>Newest</option>
+        <option value="price_low" {{ 'selected' if sort=='price_low' }}>Price: Low to High</option>
+        <option value="price_high" {{ 'selected' if sort=='price_high' }}>Price: High to Low</option>
+      </select>
+    </form>
+  </div>
+
+  {% if products %}
+  <div class="product-grid">
+    {% for p in products %}
+    <a href="{{ url_for('shop.product_detail', product_id=p.id) }}" class="product-card reveal">
+      <div class="product-media">
+        <img class="img-primary" src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+        {% if p.hover_image_url %}<img class="img-hover" src="{{ p.hover_image_url }}" alt="" loading="lazy">{% endif %}
+        {% set status = p.lowest_available_status %}
+        <span class="badge badge-{{ status }}">
+          {% if status == 'in_stock' %}In stock
+          {% elif status == 'preorder' %}Pre-order
+          {% elif status == 'made_to_order' %}Made to order
+          {% else %}Unavailable{% endif %}
+        </span>
+      </div>
+      <div class="product-info">
+        <span class="product-category">{{ p.category }}</span>
+        <h3>{{ p.name }}</h3>
+        <div class="product-swatches">
+          {% for name, hex in p.colors.items() %}
+            <span class="swatch-dot" style="background:{{ hex }}" title="{{ name }}"></span>
+          {% endfor %}
+        </div>
+        <strong class="product-price">${{ '%.2f'|format(p.base_price) }}</strong>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state glass reveal">
+    <i class="fa-regular fa-face-frown"></i>
+    <p>No pieces found. Try another category or search term.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

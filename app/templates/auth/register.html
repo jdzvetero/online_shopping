@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — Veloura{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-card glass reveal wide">
+    <span class="brand-mark large"><i class="fa-solid fa-sparkles"></i></span>
+    <h2>Join Veloura</h2>
+    <p class="hint-text">Choose how you'll use Veloura.</p>
+
+    <div class="role-toggle">
+      <button type="button" class="toggle-btn active" data-role="customer" onclick="setRole('customer', this)">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span>Shop</span>
+        <small>Browse &amp; buy clothing</small>
+      </button>
+      <button type="button" class="toggle-btn" data-role="seller" onclick="setRole('seller', this)">
+        <i class="fa-solid fa-store"></i>
+        <span>Sell</span>
+        <small>List &amp; manage products</small>
+      </button>
+    </div>
+
+    <form method="post" class="auth-form">
+      <input type="hidden" name="role" id="roleInput" value="customer">
+      <label>Full name <input type="text" name="name" value="{{ form.name if form else '' }}" required></label>
+      <label>Email <input type="email" name="email" value="{{ form.email if form else '' }}" required></label>
+      <label>Password <input type="password" name="password" required minlength="4"></label>
+      <label id="brandField" class="brand-field" hidden>Brand / store name
+        <input type="text" name="brand_name" value="{{ form.brand_name if form else '' }}" placeholder="e.g. Luxe Threads Studio">
+      </label>
+      <button type="submit" class="btn btn-primary btn-lg full-width">Create Account</button>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+  </div>
+</section>
+{% endblock %}

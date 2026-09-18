@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Your Bag — Veloura{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="section-head reveal"><h2>Your Bag</h2></div>
+
+  {% if items %}
+  <div class="cart-layout reveal">
+    <div class="cart-items">
+      {% for item in items %}
+      <div class="cart-row glass">
+        <img src="{{ item.variant.product.image_url }}" alt="{{ item.variant.product.name }}">
+        <div class="cart-row-info">
+          <h4>{{ item.variant.product.name }}</h4>
+          <p class="hint-text">Size {{ item.variant.size }} · {{ item.variant.color_name }}</p>
+          <span class="badge badge-{{ item.variant.availability_status }}">{{ item.variant.availability_label }}</span>
+        </div>
+        <form action="{{ url_for('shop.cart_update', item_id=item.id) }}" method="post" class="cart-qty">
+          <button type="submit" name="quantity" value="{{ item.quantity - 1 }}" class="qty-btn">−</button>
+          <span>{{ item.quantity }}</span>
+          <button type="submit" name="quantity" value="{{ item.quantity + 1 }}" class="qty-btn">+</button>
+        </form>
+        <strong class="cart-line-total">${{ '%.2f'|format(item.line_total) }}</strong>
+        <form action="{{ url_for('shop.cart_remove', item_id=item.id) }}" method="post">
+          <button type="submit" class="icon-btn remove-btn" title="Remove"><i class="fa-regular fa-trash-can"></i></button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    <aside class="cart-summary glass">
+      <h3>Order Summary</h3>
+      <div class="summary-row"><span>Subtotal</span><span>${{ '%.2f'|format(subtotal) }}</span></div>
+      <p class="hint-text">Delivery fee (if applicable) calculated at checkout.</p>
+      <a href="{{ url_for('shop.checkout') }}" class="btn btn-primary btn-lg full-width">Proceed to Checkout <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="{{ url_for('shop.index') }}" class="link-btn">Continue shopping</a>
+    </aside>
+  </div>
+  {% else %}
+  <div class="empty-state glass reveal">
+    <i class="fa-solid fa-bag-shopping"></i>
+    <p>Your bag is empty.</p>
+    <a href="{{ url_for('shop.index') }}" class="btn btn-primary">Start shopping</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
