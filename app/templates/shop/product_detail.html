@@ -36,7 +36,9 @@
     <div class="option-block">
       <div class="option-label">
         <span>Size</span>
+        {% if product.category not in no_size_guide_categories %}
         <button type="button" class="link-btn" onclick="openSizeGuide()"><i class="fa-regular fa-ruler"></i> Size guide</button>
+        {% endif %}
       </div>
       <div class="size-row" id="sizeRow">
         {% for s in sizes %}

@@ -82,6 +82,7 @@ def product_detail(product_id):
         sizes=sizes,
         colors=product.colors,
         size_chart=current_app.config["SIZE_CHART"],
+        no_size_guide_categories=current_app.config["NO_SIZE_GUIDE_CATEGORIES"],
         related=related,
         variants_data=variants_data,
     )

@@ -10,7 +10,10 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"]
+    SIZE_ORDER = [
+        "0-3M", "3-6M", "6-12M", "1-2Y", "2-3Y", "3-4Y",
+        "XS", "S", "M", "L", "XL", "XXL", "Custom",
+    ]
 
     SIZE_CHART = {
         "XS": {"bust": "78-81", "waist": "60-63", "hips": "85-88"},
@@ -21,6 +24,18 @@ class Config:
         "XXL": {"bust": "104-111", "waist": "86-93", "hips": "111-118"},
     }
 
-    CATEGORIES = ["Dresses", "Tops", "Bottoms", "Outerwear", "Activewear", "Accessories"]
+    CATEGORIES = [
+        "Dresses", "Tops", "Bottoms", "Outerwear", "Activewear",
+        "Accessories", "Babywear", "2 Piece Sets", "Tailor-Made",
+    ]
+
+    # Categories where the standard adult bust/waist/hip size guide doesn't apply
+    NO_SIZE_GUIDE_CATEGORIES = {"Babywear", "Tailor-Made"}
 
     DELIVERY_FEE = 5.99
+
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "app", "static", "uploads")
+    ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+    MAX_CONTENT_LENGTH = 6 * 1024 * 1024  # 6 MB per request
+
+    AUTO_SEED_DEMO_DATA = os.environ.get("AUTO_SEED_DEMO_DATA", "true").lower() != "false"

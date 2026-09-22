@@ -1,15 +1,19 @@
 """Seed the Veloura database with demo sellers, customers, and clothing products.
 
-Run with:  python -m app.seed
+Run with:  python -m app.seed        (wipes and recreates everything)
+
+`ensure_seed_data()` is also called automatically on app startup and only
+adds demo data if the products table is empty — safe to leave on in
+production so a fresh deploy is never blank.
 """
 import random
 from datetime import date, timedelta
 
-from app import create_app
 from app.extensions import db
 from app.models import User, Product, ProductVariant
 
-SIZES = ["XS", "S", "M", "L", "XL", "XXL"]
+ADULT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"]
+BABY_SIZES = ["0-3M", "3-6M", "6-12M", "1-2Y", "2-3Y"]
 
 COLOR_PALETTE = [
     ("Royal Blue", "#4169E1"),
@@ -26,6 +30,7 @@ COLOR_PALETTE = [
     ("Golden Sun", "#E8B84B"),
 ]
 
+# (name, category, price, description)
 PRODUCTS = [
     ("Satin Wrap Midi Dress", "Dresses", 54.99, "A fluid satin midi with a soft wrap silhouette — dinner-date ready."),
     ("Floral Puff-Sleeve Dress", "Dresses", 42.50, "Romantic floral print with statement puff sleeves and a cinched waist."),
@@ -47,16 +52,30 @@ PRODUCTS = [
     ("Zip-Through Track Jacket", "Activewear", 38.00, "Retro-stripe track jacket for warm-ups and street style."),
     ("Chain-Strap Mini Bag", "Accessories", 24.00, "Compact mini bag with a polished chain strap."),
     ("Silk-Feel Hair Scarf Set", "Accessories", 12.00, "Three-piece silky scarf set for hair and neck styling."),
+    ("Baby Cotton Romper", "Babywear", 14.99, "Soft breathable 100% cotton romper for newborns and infants."),
+    ("Toddler Knit Sweater Set", "Babywear", 19.99, "Cozy knit sweater and trouser set for toddlers."),
+    ("Baby Sleep Gown", "Babywear", 12.50, "Gentle envelope-neck sleep gown for easy nighttime changes."),
+    ("Ribbed Crop Top & Skirt Set", "2 Piece Sets", 36.00, "Matching ribbed crop top and mini skirt co-ord."),
+    ("Blazer & Trouser Suit Set", "2 Piece Sets", 68.00, "Sharp tailored blazer and trouser two-piece set."),
+    ("Lounge Hoodie & Joggers Set", "2 Piece Sets", 42.00, "Cozy matching hoodie and jogger set for lounging."),
+]
+
+# Tailor-Made items are always bespoke: one "Custom" size, made to order.
+TAILOR_MADE_PRODUCTS = [
+    ("Custom Tailored Evening Gown", 120.00, "Made to your exact measurements — tell us your size, style, and occasion.", 21),
+    ("Bespoke Suit (Made to Measure)", 150.00, "A fully bespoke suit, cut and stitched to your measurements.", 21),
+    ("Custom Ankara / African Print Outfit", 65.00, "Choose your fabric and style — tailored to your fit.", 14),
 ]
 
 random.seed(42)
 
 
-def build_variants(seed_offset):
+def build_variants(seed_offset, sizes_pool=ADULT_SIZES):
     """Pick 2-3 colours and up to 4 sizes, mixing in_stock / preorder / made_to_order."""
     colors = random.sample(COLOR_PALETTE, k=random.choice([2, 3]))
-    sizes = random.sample(SIZES, k=4)
-    sizes.sort(key=SIZES.index)
+    pool_size = min(4, len(sizes_pool))
+    sizes = random.sample(sizes_pool, k=pool_size)
+    sizes.sort(key=sizes_pool.index)
 
     variants = []
     i = seed_offset
@@ -99,45 +118,94 @@ def build_variants(seed_offset):
     return variants
 
 
+def build_tailor_made_variants(lead_time_days):
+    """Bespoke items: single 'Custom' size across a few colour/fabric options, always made to order."""
+    colors = random.sample(COLOR_PALETTE, k=3)
+    return [
+        dict(
+            size="Custom",
+            color_name=color_name,
+            color_hex=color_hex,
+            availability_status="made_to_order",
+            lead_time_days=lead_time_days,
+        )
+        for color_name, color_hex in colors
+    ]
+
+
+def _create_demo_data():
+    seller_one = User(name="Amara Collins", email="seller@veloura.com", role="seller", brand_name="Amara Studio")
+    seller_one.set_password("seller123")
+
+    seller_two = User(name="Noah Reyes", email="noah@veloura.com", role="seller", brand_name="Reyes Streetwear")
+    seller_two.set_password("seller123")
+
+    customer = User(name="Jenna Parker", email="shopper@veloura.com", role="customer")
+    customer.set_password("shopper123")
+
+    db.session.add_all([seller_one, seller_two, customer])
+    db.session.flush()
+
+    sellers = [seller_one, seller_two]
+
+    for idx, (name, category, price, description) in enumerate(PRODUCTS):
+        seller = sellers[idx % len(sellers)]
+        img_seed = name.lower().replace(" ", "-").replace("/", "-")
+        sizes_pool = BABY_SIZES if category == "Babywear" else ADULT_SIZES
+        product = Product(
+            seller_id=seller.id,
+            name=name,
+            category=category,
+            base_price=price,
+            description=description,
+            image_url=f"https://picsum.photos/seed/{img_seed}-a/700/900",
+            hover_image_url=f"https://picsum.photos/seed/{img_seed}-b/700/900",
+            is_featured=idx < 4,
+        )
+        db.session.add(product)
+        db.session.flush()
+
+        for v in build_variants(idx * 7, sizes_pool=sizes_pool):
+            db.session.add(ProductVariant(product_id=product.id, **v))
+
+    for idx, (name, price, description, lead_time) in enumerate(TAILOR_MADE_PRODUCTS):
+        seller = sellers[idx % len(sellers)]
+        img_seed = name.lower().replace(" ", "-").replace("/", "-")
+        product = Product(
+            seller_id=seller.id,
+            name=name,
+            category="Tailor-Made",
+            base_price=price,
+            description=description,
+            image_url=f"https://picsum.photos/seed/{img_seed}-a/700/900",
+            hover_image_url=f"https://picsum.photos/seed/{img_seed}-b/700/900",
+            is_featured=False,
+        )
+        db.session.add(product)
+        db.session.flush()
+
+        for v in build_tailor_made_variants(lead_time):
+            db.session.add(ProductVariant(product_id=product.id, **v))
+
+
+def ensure_seed_data():
+    """Non-destructive: only seeds if the products table is empty. Safe to call on every startup."""
+    if Product.query.count() > 0:
+        return
+    _create_demo_data()
+    db.session.commit()
+    print("Veloura: no products found — auto-seeded demo catalog.")
+
+
 def run():
+    """Destructive full reseed — wipes and recreates the whole database."""
+    from app import create_app
+
     app = create_app()
     with app.app_context():
         db.drop_all()
         db.create_all()
-
-        seller_one = User(name="Amara Collins", email="seller@veloura.com", role="seller", brand_name="Amara Studio")
-        seller_one.set_password("seller123")
-
-        seller_two = User(name="Noah Reyes", email="noah@veloura.com", role="seller", brand_name="Reyes Streetwear")
-        seller_two.set_password("seller123")
-
-        customer = User(name="Jenna Parker", email="shopper@veloura.com", role="customer")
-        customer.set_password("shopper123")
-
-        db.session.add_all([seller_one, seller_two, customer])
-        db.session.flush()
-
-        sellers = [seller_one, seller_two]
-
-        for idx, (name, category, price, description) in enumerate(PRODUCTS):
-            seller = sellers[idx % len(sellers)]
-            img_seed = name.lower().replace(" ", "-")
-            product = Product(
-                seller_id=seller.id,
-                name=name,
-                category=category,
-                base_price=price,
-                description=description,
-                image_url=f"https://picsum.photos/seed/{img_seed}-a/700/900",
-                hover_image_url=f"https://picsum.photos/seed/{img_seed}-b/700/900",
-                is_featured=idx < 4,
-            )
-            db.session.add(product)
-            db.session.flush()
-
-            for v in build_variants(idx * 7):
-                db.session.add(ProductVariant(product_id=product.id, **v))
-
+        _create_demo_data()
         db.session.commit()
 
         print("Database seeded.")
