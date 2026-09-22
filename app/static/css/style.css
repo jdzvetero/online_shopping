@@ -275,9 +275,19 @@ button { font-family: inherit; cursor: pointer; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 26px; flex-wrap: wrap; }
 .section-head h2, .section-head h3 { margin: 0; }
 
+.sort-form { display: flex; align-items: center; gap: 14px; }
 .sort-form select {
   background: var(--glass-bg-soft); border: 1px solid var(--glass-border); color: var(--text-hi);
   padding: 8px 14px; border-radius: 999px; font-size: 0.85rem; outline: none;
+}
+.clear-filter { white-space: nowrap; }
+
+.filter-tag {
+  display: inline-flex; align-items: center; margin-left: 12px;
+  padding: 5px 14px; border-radius: 999px; vertical-align: middle;
+  background: rgba(242, 200, 121, 0.15); border: 1px solid rgba(242, 200, 121, 0.4);
+  color: var(--gold); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  font-family: "Poppins", sans-serif;
 }
 
 /* ---------- Reveal on scroll ---------- */
@@ -320,7 +330,11 @@ button { font-family: inherit; cursor: pointer; }
   position: absolute; padding: 18px 22px; border-radius: var(--radius-md);
   display: flex; flex-direction: column; align-items: center; gap: 10px; width: 130px;
   font-size: 0.8rem; font-weight: 600; color: var(--text-mid);
+  cursor: pointer; transition: transform 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease);
+  border: 1px solid transparent;
 }
+.hero-card:hover { transform: translateY(-4px) scale(1.05); border-color: rgba(122, 148, 255, 0.5); }
+.hero-card-active { border-color: var(--gold); background: rgba(242, 200, 121, 0.12); color: var(--text-hi); }
 .hero-card i { font-size: 1.6rem; color: var(--royal-light); }
 .hero-card:nth-child(2) { top: 8%; left: 8%; }
 .hero-card:nth-child(3) { top: 40%; right: 0; }
