@@ -7,7 +7,7 @@
     <h2>{{ 'Edit Product' if product else 'List a New Product' }}</h2>
   </div>
 
-  <form method="post" class="product-form glass reveal" id="productForm">
+  <form method="post" enctype="multipart/form-data" class="product-form glass reveal" id="productForm">
     <div class="form-grid">
       <label>Product name
         <input type="text" name="name" value="{{ product.name if product else (form.name if form else '') }}" required>
@@ -36,13 +36,26 @@
       </label>
     </div>
 
+    <p class="hint-text">Upload a photo from your device, or paste an image URL — uploading a file takes priority.</p>
     <div class="form-grid">
-      <label>Primary image URL
-        <input type="url" name="image_url" value="{{ product.image_url if product else (form.image_url if form else '') }}" placeholder="https://…" required>
+      <label>Primary photo — upload
+        <input type="file" name="image_file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="previewImage(this, 'imagePreview')">
       </label>
-      <label>Hover image URL (optional)
+      <label>Hover photo — upload (optional)
+        <input type="file" name="hover_image_file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="previewImage(this, 'hoverPreview')">
+      </label>
+    </div>
+    <div class="form-grid">
+      <label>…or primary image URL
+        <input type="url" name="image_url" value="{{ product.image_url if product else (form.image_url if form else '') }}" placeholder="https://…">
+      </label>
+      <label>…or hover image URL (optional)
         <input type="url" name="hover_image_url" value="{{ product.hover_image_url if product else (form.hover_image_url if form else '') }}" placeholder="https://…">
       </label>
+    </div>
+    <div class="image-preview-row">
+      <img id="imagePreview" class="image-preview" src="{{ product.image_url if product else '' }}" alt="" {{ '' if product else 'hidden' }}>
+      <img id="hoverPreview" class="image-preview" src="{{ product.hover_image_url if product and product.hover_image_url else '' }}" alt="" {{ '' if product and product.hover_image_url else 'hidden' }}>
     </div>
 
     {% if product %}

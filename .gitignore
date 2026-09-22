@@ -4,3 +4,5 @@ __pycache__/
 *.db
 .env
 instance/
+app/static/uploads/*
+!app/static/uploads/.gitkeep

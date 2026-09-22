@@ -1,8 +1,11 @@
+import os
+import uuid
 from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models import Product, ProductVariant, Order, OrderItem
@@ -133,6 +136,24 @@ def _product_variants_to_json(product):
     return out
 
 
+def _save_uploaded_image(file_storage):
+    """Save an uploaded image file and return its public URL path, or None if no valid file given."""
+    if not file_storage or not file_storage.filename:
+        return None
+
+    ext = file_storage.filename.rsplit(".", 1)[-1].lower() if "." in file_storage.filename else ""
+    if ext not in current_app.config["ALLOWED_IMAGE_EXTENSIONS"]:
+        flash(f"“{file_storage.filename}” isn't a supported image type.", "error")
+        return None
+
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_folder, exist_ok=True)
+
+    filename = f"{uuid.uuid4().hex}_{secure_filename(file_storage.filename)}"
+    file_storage.save(os.path.join(upload_folder, filename))
+    return f"/static/uploads/{filename}"
+
+
 @seller_bp.route("/products/new", methods=["GET", "POST"])
 @seller_required
 def product_new():
@@ -145,11 +166,18 @@ def product_new():
         hover_image_url = request.form.get("hover_image_url", "").strip()
         is_featured = bool(request.form.get("is_featured"))
 
+        uploaded_image = _save_uploaded_image(request.files.get("image_file"))
+        uploaded_hover = _save_uploaded_image(request.files.get("hover_image_file"))
+        if uploaded_image:
+            image_url = uploaded_image
+        if uploaded_hover:
+            hover_image_url = uploaded_hover
+
         variants = _parse_variants_from_form(request.form)
 
         error = None
         if not name or not category or not base_price or not image_url:
-            error = "Please fill in all required product details."
+            error = "Please fill in all required product details (an image, uploaded or linked, is required)."
         elif not variants:
             error = "Add at least one size/colour variant."
 
@@ -207,8 +235,17 @@ def product_edit(product_id):
         product.category = request.form.get("category", "")
         product.description = request.form.get("description", "").strip()
         product.base_price = request.form.get("base_price", type=float)
-        product.image_url = request.form.get("image_url", "").strip()
-        product.hover_image_url = request.form.get("hover_image_url", "").strip() or None
+        image_url = request.form.get("image_url", "").strip()
+        hover_image_url = request.form.get("hover_image_url", "").strip()
+        uploaded_image = _save_uploaded_image(request.files.get("image_file"))
+        uploaded_hover = _save_uploaded_image(request.files.get("hover_image_file"))
+        if uploaded_image:
+            image_url = uploaded_image
+        if uploaded_hover:
+            hover_image_url = uploaded_hover
+
+        product.image_url = image_url
+        product.hover_image_url = hover_image_url or None
         product.is_featured = bool(request.form.get("is_featured"))
         product.is_active = bool(request.form.get("is_active"))
 

@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_login import current_user
 
@@ -39,7 +41,13 @@ def create_app(config_class=Config):
             )
         return {"cart_count": cart_count, "categories": app.config["CATEGORIES"]}
 
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
     with app.app_context():
         db.create_all()
+        if app.config.get("AUTO_SEED_DEMO_DATA"):
+            from app.seed import ensure_seed_data
+
+            ensure_seed_data()
 
     return app

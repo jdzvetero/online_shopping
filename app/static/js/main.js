@@ -56,6 +56,18 @@ function setMainImage(src) {
   document.querySelectorAll(".thumb").forEach((t) => t.classList.toggle("active", t.src === src));
 }
 
+/* ---------- Seller product form: image preview ---------- */
+function previewImage(input, previewId) {
+  const preview = document.getElementById(previewId);
+  if (!preview || !input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    preview.src = e.target.result;
+    preview.hidden = false;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
 /* ---------- Size guide modal ---------- */
 function openSizeGuide() {
   document.getElementById("sizeGuideModal")?.classList.add("show");
