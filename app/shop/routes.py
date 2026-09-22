@@ -22,11 +22,21 @@ def customer_required(view):
     return wrapped
 
 
+AVAILABILITY_LABELS = {
+    "in_stock": "In Stock",
+    "preorder": "Pre-order",
+    "made_to_order": "Made to Order",
+}
+
+
 @shop_bp.route("/")
 def index():
     category = request.args.get("category")
     search = request.args.get("q", "").strip()
     sort = request.args.get("sort", "newest")
+    availability = request.args.get("availability")
+    if availability not in AVAILABILITY_LABELS:
+        availability = None
 
     query = Product.query.filter_by(is_active=True)
     if category and category in current_app.config["CATEGORIES"]:
@@ -42,6 +52,13 @@ def index():
         query = query.order_by(Product.created_at.desc())
 
     products = query.all()
+    if availability == "in_stock":
+        products = [
+            p for p in products if any(v.availability_status == "in_stock" and v.stock_quantity > 0 for v in p.variants)
+        ]
+    elif availability:
+        products = [p for p in products if any(v.availability_status == availability for v in p.variants)]
+
     featured = Product.query.filter_by(is_active=True, is_featured=True).limit(4).all()
 
     return render_template(
@@ -49,6 +66,8 @@ def index():
         products=products,
         featured=featured,
         active_category=category,
+        active_availability=availability,
+        availability_label=AVAILABILITY_LABELS.get(availability),
         search=search,
         sort=sort,
     )
